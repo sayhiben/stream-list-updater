@@ -29,7 +29,7 @@ A browser window will open and automatically load up stream URLs. You will need 
 
 
 ```
-UPDATE_SECONDS=<age in seconds to consider check stale> CHECK_INTERVAL=<seconds between individual site checks> SHEETS='<sheets id from url>,<tab name 1>,<tab name 2>' PREV_STREAMS_SHEET_ID=<sheets id from url> PREV_STREAMS_TAB_NAME=<tabname> STREAM_EXPIRE_SECONDS=14400 YT_API_KEY=... IG_USER=... IG_PASS=... npm start
+UPDATE_SECONDS=<age in seconds to consider check stale> CHECK_INTERVAL=<seconds between individual site checks> SLEEP_SECONDS=30 SHEETS='<sheets id from url>,<tab name 1>,<tab name 2>' PREV_STREAMS_SHEET_ID=<sheets id from url> PREV_STREAMS_TAB_NAME=<tabname> STREAM_EXPIRE_SECONDS=14400 YT_API_KEY=... IG_USER=... IG_PASS=... npm start
 ```
 
 ### Collect URLs from Twitch chat
@@ -48,5 +48,5 @@ To set up Twitter bot:
    1. Click the link and authorize your Twitter app.
 
 ```
-FROM_SHEETS='<sheets id from url>,<tab name 1>,<tab name 2>' TO_SHEET_ID=<sheets id from url> TO_TAB_NAME=... FLAGGED_SHEET_ID=<sheets id from ulr> FLAGGED_TAB_NAME=... ANNOUNCE_WEBHOOK_URL=<webhook url from discord> ANNOUNCE_DETAILS_WEBHOOK_URL=<webhook url from discord> SLEEP_SECONDS=30 npm run link-publisher
+FROM_SHEETS='<sheets id from url>,<tab name 1>,<tab name 2>' TO_SHEET_ID=<sheets id from url> TO_TAB_NAME=... FLAGGED_SHEET_ID=<sheets id from ulr> FLAGGED_TAB_NAME=... PUBLISHED_COL_NAME=... VETTED_COL_NAME=... ANNOUNCE_WEBHOOK_URL=<webhook url from discord> ANNOUNCE_DETAILS_WEBHOOK_URL=<webhook url from discord> SLEEP_SECONDS=30 npm run link-publisher
 ```

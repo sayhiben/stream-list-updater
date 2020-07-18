@@ -4,16 +4,21 @@ const toLower = require('lodash/toLower')
 const {GoogleSpreadsheet} = require('google-spreadsheet')
 const Twitter = require('twitter')
 const fetch = require('node-fetch')
+const moment = require('moment-timezone')
 
 const FROM_SHEETS = process.env.FROM_SHEETS.split('|').map(s => s.split(','))
 const TO_SHEET_ID = process.env.TO_SHEET_ID
 const TO_TAB_NAME = process.env.TO_TAB_NAME
 const FLAGGED_SHEET_ID = process.env.FLAGGED_SHEET_ID
 const FLAGGED_TAB_NAME = process.env.FLAGGED_TAB_NAME
+const PUBLISHED_COL_NAME = process.env.PUBLISHED_COL_NAME
+const VETTED_COL_NAME = process.env.VETTED_COL_NAME
 const ANNOUNCE_WEBHOOK_URL = process.env.ANNOUNCE_WEBHOOK_URL
 const ANNOUNCE_DETAILS_WEBHOOK_URL = process.env.ANNOUNCE_DETAILS_WEBHOOK_URL
 const SLEEP_SECONDS = process.env.SLEEP_SECONDS
 const SHEET_CREDS = require('./gs-creds.json')
+const TIMEZONE = 'America/Chicago'
+const DATE_FORMAT = 'M/D/YY HH:mm:ss'
 
 let TWITTER_CREDS
 try {
@@ -103,13 +108,16 @@ async function runPublish() {
     for (const sheet of sheets) {
       const rows = await doWithRetry(() => sheet.getRows())
       for (const row of rows) {
-        if (!row.Link || row.Published !== '') {
+        if (!row.Link || row[PUBLISHED_COL_NAME] !== '') {
           continue
         }
 
-        if (row.hasOwnProperty('Vetted') && row.Vetted !== 'x') {
+        if (row.hasOwnProperty(VETTED_COL_NAME) && row[VETTED_COL_NAME] !== 'x') {
           continue
         }
+
+        await sheet.loadCells(row.a1Range)
+        const publishedCell = sheet.getCell(row.rowNumber - 1, sheet.headerValues.indexOf(PUBLISHED_COL_NAME))
 
         const linkInfo = await getLinkInfo(row.Link)
         if (linkInfo.normalizedURL) {
@@ -117,22 +125,25 @@ async function runPublish() {
         }
 
         if (flaggedURLs.has(toLower(row.Link)) || flaggedSources.has(toLower(row.Source))) {
-          row.Published = 'flagged'
-          await doWithRetry(() => row.save())
+          publishedCell.value = 'flagged'
+          await doWithRetry(() => publishedCell.save())
           console.log(`skipped flagged ${row.Link}`)
           continue
         }
 
         if (publishedURLs.has(row.Link)) {
-          row.Published = 'dupe'
-          await doWithRetry(() => row.save())
+          publishedCell.value = 'dupe'
+          await doWithRetry(() => publishedCell.save())
           console.log(`skipped dupe ${row.Link}`)
           continue
         }
 
+        row['Published (CST)'] = moment().tz(TIMEZONE).format(DATE_FORMAT)
         await doWithRetry(() => toSheet.addRow(row))
-        row.Published = 'x'
-        await doWithRetry(() => row.save())
+
+        publishedCell.value = 'x'
+        await doWithRetry(() => publishedCell.save())
+
         publishedURLs.add(row.Link)
 
         await announce(row)
